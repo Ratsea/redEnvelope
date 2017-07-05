@@ -1,0 +1,4 @@
+#启动方式
+1.修改com.ratsea.util.DistributeLock 分布式工具类中 ZK链接地址
+
+2.执行test 下 T类，用junit形式执行
