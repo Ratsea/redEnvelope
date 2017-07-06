@@ -25,7 +25,7 @@ public class DistributeLock implements Watcher {
     private CountDownLatch latch;
 
     //server链接字符串
-    private static final String CONNECTION_STRING = "192.168.10.20:2181";
+    private static final String CONNECTION_STRING = "192.168.10.7:2181";
 
     private static final int SESSION_TIMEOUT = 5000; //超时时间
 

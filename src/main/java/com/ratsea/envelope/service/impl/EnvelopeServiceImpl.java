@@ -83,25 +83,30 @@ public class EnvelopeServiceImpl implements EnvelopeService {
     @Override
     public ResultDto getReadEnvelope(String id, Long userId,String nickeName) throws Exception {
 
+        long startTime=System.currentTimeMillis();   //获取开始时间
+
         if(ObjectUtils.isEmpty(id)){
             return new ResultDto(103,"红包编号没有传入","验证");
         }
 
+        EnvelopePushDto envelopePushDto=(EnvelopePushDto)DbStorage.getStorage().get(id);
+
+        if(ObjectUtils.isEmpty(envelopePushDto)){
+            return new ResultDto(104,"红包不存在","红包不存在");
+        }
+
+        //验证红包是否被抢完
+        if(envelopePushDto.getNum()==envelopePushDto.getUseNum()){
+            return new ResultDto(105,"红包已被抢完","红包已被抢完");
+        }
+
+        envelopePushDto=(EnvelopePushDto)DbStorage.getStorage().get(id);
             DistributeLock distributeLockDemo = new DistributeLock();
             distributeLockDemo.lock();
-
-            EnvelopePushDto envelopePushDto=(EnvelopePushDto)DbStorage.getStorage().get(id);
-
-            if(ObjectUtils.isEmpty(envelopePushDto)){
+            if(ObjectUtils.isEmpty(distributeLockDemo)){
                 distributeLockDemo.unlock();
-                return new ResultDto(104,"红包不存在","红包不存在");
             }
 
-            //验证红包是否被抢完
-            if(envelopePushDto.getNum()==envelopePushDto.getUseNum()){
-                distributeLockDemo.unlock();
-                return new ResultDto(105,"红包已被抢完","红包已被抢完");
-            }
             //验证用户是否抢过该红包
            Long num= envelopePushDto.getUser().stream().filter(n->n.getId()==userId).count();
             if(num>0){
@@ -122,14 +127,19 @@ public class EnvelopeServiceImpl implements EnvelopeService {
             }
         }
 
+        if(ObjectUtils.isEmpty(user)){
+            distributeLockDemo.unlock();
+            return new ResultDto(105,"红包已被抢完","红包已被抢完");
+        }
+
         envelopePushDto.setUseNum(envelopePushDto.getUseNum()+1);
           /*  User user=  envelopePushDto.getUser().stream().filter(n->ObjectUtils.isEmpty(n.getId())).findFirst().get();
             user.setId(userId);
             user.setNickName(nickeName);*/
-            DbStorage.getStorage().put(id,envelopePushDto);
-
+        DbStorage.getStorage().put(id,envelopePushDto);
         distributeLockDemo.unlock();
-            return new ResultDto(0,"成功","成功","抢到红包金额为："+user.getMoney());
+        long endTime=System.currentTimeMillis(); //获取结束时间
+        return new ResultDto(0,"成功","成功","抢到红包金额为："+user.getMoney()+">>>>>>>>>>>总共花费了:"+(endTime-startTime)+"ms");
 
     }
 }
